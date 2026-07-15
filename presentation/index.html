@@ -1,0 +1,27 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PM Assistant — Investor Demo</title>
+<style>
+body{margin:0;background:#050505;color:#fff8e8;font-family:Segoe UI,Arial,sans-serif;overflow:hidden}
+.stage{height:100vh;position:relative;background:radial-gradient(circle at 20% 10%,#3b2b12,transparent 35%),#080706}
+.slide{position:absolute;inset:0;display:grid;place-items:center;padding:6vw;opacity:0;transition:.7s}
+.slide.active{opacity:1}.gold{color:#efc967}.wrap{max-width:1100px;width:100%}
+.two{display:grid;grid-template-columns:380px 1fr;gap:50px;align-items:center}.portrait,.logo{max-width:100%;border-radius:26px;border:1px solid #6f5424}
+h1{font:700 clamp(3rem,7vw,6rem) Georgia,serif;margin:0 0 15px}h2{font:700 clamp(2.2rem,5vw,4.2rem) Georgia,serif;margin:0 0 18px}
+p{font-size:clamp(1rem,2vw,1.5rem);line-height:1.6;color:#c7bdad}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{border:1px solid #4a391f;background:#13100c;padding:24px;border-radius:18px}.controls{position:absolute;bottom:18px;left:0;right:0;text-align:center}
+button{padding:12px 17px;margin:5px;border-radius:12px;border:1px solid #5f4724;background:#17120c;color:white}button.primary{background:#e0ad46;color:#1b1104;border:0;font-weight:700}
+@media(max-width:800px){.two{grid-template-columns:1fr}.portrait{max-height:35vh;width:auto;margin:auto}.cards{grid-template-columns:1fr}}
+</style></head><body><div class="stage">
+<section class="slide active"><div class="wrap" style="text-align:center"><img class="logo" src="assets/logo.jpeg" style="width:160px"><h1><span class="gold">PM Assistant</span></h1><p>Интеллектуальный помощник, созданный человеком для помощи людям.</p></div></section>
+<section class="slide"><div class="wrap two"><img class="portrait" src="assets/portrait.jpeg"><div><h2>Автор идеи — <span class="gold">Павел Мышев</span></h2><p>Один человек превратил личный жизненный опыт в идею цифрового помощника, который должен облегчать общение, работу и повседневные задачи другим людям.</p></div></div></section>
+<section class="slide"><div class="wrap"><h2>Для кого создан <span class="gold">PM Assistant</span></h2><div class="cards"><div class="card"><h3>♿ Доступность</h3><p>Для людей с инвалидностью и тех, кому сложно долго печатать.</p></div><div class="card"><h3>👵 Простота</h3><p>Для пожилых людей и пользователей без технического опыта.</p></div><div class="card"><h3>🌍 Многоязычность</h3><p>Для иностранцев, путешественников и международного общения.</p></div></div></div></section>
+<section class="slide"><div class="wrap"><h2>Главные функции</h2><div class="cards"><div class="card"><h3>🎙️ Голос</h3><p>Вопросы голосом и чтение ответов вслух.</p></div><div class="card"><h3>🌐 Перевод</h3><p>Живой перевод и помощь при неясной речи.</p></div><div class="card"><h3>📄 Документы</h3><p>Письма, заявления, объяснение и анализ файлов.</p></div></div></div></section>
+<section class="slide"><div class="wrap" style="text-align:center"><h2><span class="gold">PM Assistant</span></h2><p>Вежливый, понятный и практичный искусственный интеллект.<br>Контакт: kop8100@gmail.com</p></div></section>
+<div class="controls"><button id="prev">← Назад</button><button class="primary" id="play">▶ Смотреть</button><button id="next">Далее →</button></div>
+</div><script>
+const s=[...document.querySelectorAll('.slide')];let i=0,t=null;
+function show(n){i=(n+s.length)%s.length;s.forEach((x,k)=>x.classList.toggle('active',k===i))}
+function stop(){clearInterval(t);t=null;document.getElementById('play').textContent='▶ Смотреть'}
+document.getElementById('next').onclick=()=>{stop();show(i+1)};document.getElementById('prev').onclick=()=>{stop();show(i-1)};
+document.getElementById('play').onclick=()=>{if(t){stop();return}document.getElementById('play').textContent='⏸ Пауза';t=setInterval(()=>{if(i===s.length-1){stop()}else show(i+1)},5000)};
+</script></body></html>

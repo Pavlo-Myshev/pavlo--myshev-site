@@ -1,10 +1,10 @@
 {
-  "name": "PM Assistant",
-  "short_name": "PM Assistant",
+  "name": "ПМ-ассистент",
+  "short_name": "ПМ",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#080706",
-  "theme_color": "#0a0908",
+  "theme_color": "#090806",
   "icons": [
     {
       "src": "assets/pm-logo.jpeg",

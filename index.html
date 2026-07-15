@@ -1,388 +1,222 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0a0908">
-  <meta name="description" content="PM Assistant — умный многоязычный помощник для общения, переводов и документов.">
-  <title>PM Assistant</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="assets/pm-logo.jpeg">
-  <style>
-    :root{
-      --bg:#080706; --panel:#11100e; --panel2:#17140f; --gold:#d9a441;
-      --gold2:#f2cf79; --text:#fff8ea; --muted:#c9bfae; --line:#3d2f19;
-      --ok:#56c596; --danger:#ff7b7b; --shadow:0 24px 70px rgba(0,0,0,.38);
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;background:
-      radial-gradient(circle at 20% 0%,rgba(217,164,65,.13),transparent 32%),
-      radial-gradient(circle at 100% 20%,rgba(217,164,65,.08),transparent 28%),
-      var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
-    body{overflow-x:hidden}
-    button,input,textarea,select{font:inherit}
-    a{color:inherit;text-decoration:none}
-    .shell{min-height:100vh}
-    .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:24px;
-      padding:14px clamp(18px,4vw,58px);background:rgba(8,7,6,.88);backdrop-filter:blur(18px);
-      border-bottom:1px solid rgba(217,164,65,.25)}
-    .brand{display:flex;align-items:center;gap:12px;min-width:max-content}
-    .brand img{width:52px;height:52px;border-radius:14px;object-fit:cover;border:1px solid var(--line)}
-    .brand strong{font-family:Georgia,serif;font-size:1.25rem;letter-spacing:.03em}
-    .brand span{display:block;color:var(--gold2);font-size:.78rem;margin-top:2px}
-    .nav{display:flex;gap:8px;align-items:center;margin-left:auto}
-    .nav button,.lang,.menu-btn{border:1px solid transparent;background:transparent;color:var(--muted);
-      padding:10px 13px;border-radius:12px;cursor:pointer;transition:.2s}
-    .nav button:hover,.nav button.active{color:var(--text);border-color:var(--line);background:#15120d}
-    .lang{border-color:var(--line);color:var(--text);background:#120f0b}
-    .menu-btn{display:none;border-color:var(--line);font-size:1.25rem}
-    main{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:42px 0 70px}
-    .page{display:none;animation:fade .32s ease}
-    .page.active{display:block}
-    @keyframes fade{from{opacity:.2;transform:translateY(8px)}to{opacity:1;transform:none}}
-    .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:34px;align-items:center;min-height:68vh}
-    .eyebrow{display:inline-flex;gap:8px;align-items:center;color:var(--gold2);border:1px solid var(--line);
-      background:#130f0a;padding:8px 12px;border-radius:999px;font-size:.88rem}
-    h1,h2,h3{font-family:Georgia,serif;margin:0 0 16px}
-    h1{font-size:clamp(2.7rem,6vw,5.4rem);line-height:.96;letter-spacing:-.045em;margin-top:20px}
-    h1 em{font-style:normal;color:var(--gold2)}
-    h2{font-size:clamp(2rem,4vw,3.3rem)}
-    .lead{font-size:clamp(1.05rem,2vw,1.25rem);line-height:1.65;color:var(--muted);max-width:690px}
-    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
-    .btn{border:1px solid var(--line);background:#15110c;color:var(--text);padding:14px 18px;border-radius:14px;
-      cursor:pointer;font-weight:700;transition:.2s;box-shadow:none}
-    .btn:hover{transform:translateY(-2px);border-color:var(--gold)}
-    .btn.primary{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#171006;border:none}
-    .btn.ghost{background:transparent}
-    .assistant-card{background:linear-gradient(180deg,rgba(27,23,16,.95),rgba(13,12,10,.98));
-      border:1px solid rgba(217,164,65,.42);border-radius:28px;padding:18px;box-shadow:var(--shadow)}
-    .assistant-head{display:flex;align-items:center;gap:12px;padding:4px 4px 16px}
-    .orb{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:
-      radial-gradient(circle at 35% 30%,#fff2b3 0 8%,#d9a441 25%,#6c4310 65%,#1a1208 100%);
-      box-shadow:0 0 24px rgba(217,164,65,.4)}
-    .status{color:var(--ok);font-size:.83rem}
-    .chat{height:370px;overflow:auto;padding:14px;background:#0c0b09;border-radius:18px;border:1px solid #282117}
-    .msg{max-width:86%;padding:11px 13px;border-radius:15px;margin:8px 0;line-height:1.45;white-space:pre-wrap}
-    .msg.bot{background:#1b1711;border:1px solid #332817}
-    .msg.user{margin-left:auto;background:linear-gradient(135deg,#d9a441,#ad7922);color:#120d06}
-    .composer{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:10px}
-    .composer textarea{resize:none;min-height:54px;max-height:130px;padding:14px;border-radius:14px;border:1px solid #342918;
-      color:var(--text);background:#0d0b09;outline:none}
-    .icon-btn{width:54px;border-radius:14px;border:1px solid var(--line);background:#17130e;color:var(--text);cursor:pointer}
-    .icon-btn.listening{animation:pulse 1s infinite;background:#6a1d1d;border-color:#ff8f8f}
-    @keyframes pulse{50%{transform:scale(1.06);box-shadow:0 0 0 8px rgba(255,123,123,.08)}}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:28px}
-    .card{background:linear-gradient(180deg,#15120e,#0f0e0c);border:1px solid #332819;border-radius:20px;padding:24px;min-height:190px}
-    .card .icon{font-size:2rem;margin-bottom:16px}
-    .card p,.section-copy{color:var(--muted);line-height:1.65}
-    .section-head{max-width:780px;margin-bottom:28px}
-    .founder{display:grid;grid-template-columns:320px 1fr;gap:34px;align-items:center}
-    .founder img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:28px;border:1px solid var(--line);box-shadow:var(--shadow)}
-    .notice{border-left:4px solid var(--gold);padding:16px 18px;background:#15110c;border-radius:12px;color:var(--muted)}
-    .contact-form{display:grid;gap:12px;max-width:720px}
-    .contact-form input,.contact-form textarea{width:100%;padding:14px;border-radius:12px;border:1px solid #3b2e1b;background:#0d0b09;color:var(--text)}
-    .footer{border-top:1px solid rgba(217,164,65,.2);padding:24px;text-align:center;color:#9f9587}
-    .small{font-size:.86rem;color:#a79c8d;margin-top:10px}
-    .toast{position:fixed;right:20px;bottom:20px;background:#17130e;border:1px solid var(--line);padding:13px 16px;border-radius:12px;
-      box-shadow:var(--shadow);display:none;z-index:50;max-width:320px}
-    @media (max-width:900px){
-      .hero,.founder{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}
-      .nav{display:none;position:absolute;top:78px;left:14px;right:14px;flex-direction:column;align-items:stretch;
-        padding:12px;background:#0e0c09;border:1px solid var(--line);border-radius:16px}
-      .nav.open{display:flex}.nav button{text-align:left}.menu-btn{display:block;margin-left:auto}
-      .lang{margin-left:0}.topbar{gap:10px}.brand strong{font-size:1rem}.brand span{display:none}
-    }
-    @media (max-width:620px){
-      main{padding-top:24px}.grid{grid-template-columns:1fr}.hero{min-height:auto}.assistant-card{padding:12px;border-radius:20px}
-      .chat{height:340px}.composer{grid-template-columns:1fr auto}.send-btn{grid-column:1/-1;width:100%;height:48px}
-      .founder{gap:20px}.founder img{max-width:300px;margin:auto}.brand img{width:44px;height:44px}
-      .topbar{padding:11px 14px}.lang{padding:9px 8px}
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090806">
+<title>ПМ-ассистент 2.1</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/pm-logo.jpeg">
+<style>
+:root{
+ --bg:#080706;--panel:#11100e;--panel2:#18140e;--gold:#d9a441;--gold2:#f4d37e;
+ --text:#fff8e8;--muted:#bdb3a4;--line:#3c2d18;--ok:#61d6a5;--bad:#ff8c8c;
+}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:
+radial-gradient(circle at 12% 0%,rgba(217,164,65,.14),transparent 28%),
+radial-gradient(circle at 100% 18%,rgba(217,164,65,.08),transparent 25%),var(--bg);
+color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:20px;
+padding:13px clamp(14px,4vw,54px);background:rgba(8,7,6,.9);backdrop-filter:blur(16px);
+border-bottom:1px solid rgba(217,164,65,.25)}
+.brand{display:flex;align-items:center;gap:12px;min-width:max-content}
+.brand img{width:50px;height:50px;border-radius:14px;object-fit:cover;border:1px solid var(--line)}
+.brand b{font:700 1.2rem Georgia,serif}.brand small{display:block;color:var(--gold2);margin-top:2px}
+nav{display:flex;gap:6px;margin-left:auto}
+nav button,.lang,.menu{background:transparent;color:var(--muted);border:1px solid transparent;border-radius:11px;padding:10px 12px}
+nav button:hover,nav button.active{background:#17130e;color:var(--text);border-color:var(--line)}
+.lang{background:#130f0b;color:var(--text);border-color:var(--line)}.menu{display:none;border-color:var(--line)}
+main{width:min(1180px,calc(100% - 26px));margin:auto;padding:34px 0 60px}.page{display:none}.page.active{display:block}
+.hero{display:grid;grid-template-columns:.9fr 1.1fr;gap:26px;align-items:start}
+.intro{padding:34px 10px}.badge{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:8px 12px;color:var(--gold2);background:#130f0a}
+h1,h2,h3{font-family:Georgia,serif;margin:0 0 15px}h1{font-size:clamp(2.6rem,6vw,5rem);line-height:.98;margin-top:20px}h1 em{font-style:normal;color:var(--gold2)}
+.lead,.copy{color:var(--muted);line-height:1.7;font-size:1.06rem}.slogan{font-weight:700;color:var(--gold2);margin-top:20px}
+.btn{border:1px solid var(--line);background:#17130e;color:var(--text);padding:13px 17px;border-radius:13px;font-weight:700}
+.btn.primary{border:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#171006}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.chatbox{border:1px solid rgba(217,164,65,.42);border-radius:26px;background:linear-gradient(#17130e,#0e0c09);padding:16px;box-shadow:0 28px 70px rgba(0,0,0,.35)}
+.chathead{display:flex;align-items:center;gap:11px;padding:4px 4px 14px}.orb{width:43px;height:43px;border-radius:50%;display:grid;place-items:center;color:#241500;font-weight:900;background:radial-gradient(circle at 35% 30%,#fff2b4,#d8a33d 35%,#68400e 70%);box-shadow:0 0 22px rgba(217,164,65,.35)}
+.online{font-size:.83rem;color:var(--ok)}.chat{height:440px;overflow:auto;padding:13px;border-radius:18px;background:#0b0a08;border:1px solid #292116}
+.message-wrap{margin:9px 0;max-width:88%}.message-wrap.user{margin-left:auto}.msg{padding:12px 14px;border-radius:15px;line-height:1.48;white-space:pre-wrap}
+.message-wrap.bot .msg{background:#1b1711;border:1px solid #392b18}.message-wrap.user .msg{background:linear-gradient(135deg,#e2b34e,#b87d1f);color:#130e06}
+.tools{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 0}.tool{border:1px solid #392c1a;background:#12100c;color:#d7cbbb;border-radius:10px;padding:7px 9px;font-size:.8rem}
+.tool:hover,.tool.on{color:#171006;background:var(--gold2)}.composer{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;margin-top:10px}
+textarea{min-height:55px;max-height:135px;resize:none;border:1px solid #392d1b;border-radius:14px;background:#0c0a08;color:var(--text);padding:14px;outline:none}
+.iconbtn{width:54px;border-radius:14px;border:1px solid var(--line);background:#17130e;color:var(--text)}.iconbtn.listening{background:#762424;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}.hint{font-size:.83rem;color:#a89e90;margin:9px 3px 0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:17px}.card{border:1px solid #372a19;border-radius:20px;background:linear-gradient(#17130e,#0f0d0a);padding:23px;min-height:180px}
+.icon{font-size:2rem;margin-bottom:13px}.section-head{max-width:780px;margin-bottom:25px}
+.creator{display:grid;grid-template-columns:1fr 1fr;gap:20px}.creator-note{border-left:4px solid var(--gold);background:#15110c;border-radius:12px;padding:17px;color:var(--muted)}
+.creator-photo{display:none;margin-top:18px}.creator-photo.show{display:block}.creator-photo img{max-width:300px;width:100%;border-radius:22px;border:1px solid var(--line)}
+.contact{max-width:720px}.email{display:flex;align-items:center;gap:13px;padding:18px;border:1px solid var(--line);border-radius:15px;background:#15110d;font-size:1.2rem}
+footer{text-align:center;border-top:1px solid rgba(217,164,65,.2);padding:24px;color:#9d9385}
+.toast{display:none;position:fixed;right:20px;bottom:20px;z-index:60;background:#17130e;border:1px solid var(--line);padding:13px 16px;border-radius:12px;max-width:330px}
+@media(max-width:900px){.hero,.creator{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}nav{display:none;position:absolute;top:76px;left:12px;right:12px;flex-direction:column;background:#0e0c09;border:1px solid var(--line);padding:10px;border-radius:15px}nav.open{display:flex}.menu{display:block;margin-left:auto}.brand small{display:none}}
+@media(max-width:620px){main{padding-top:20px}.grid{grid-template-columns:1fr}.intro{padding:20px 5px}.chatbox{padding:11px;border-radius:20px}.chat{height:430px}.composer{grid-template-columns:1fr auto}.attach,.send{grid-column:auto}.video{display:none}.send{grid-column:1/-1;width:100%;height:47px}.brand img{width:44px;height:44px}header{gap:8px}}
+</style>
 </head>
 <body>
-<div class="shell">
-  <header class="topbar">
-    <a class="brand" href="#home" data-route="home">
-      <img src="assets/pm-logo.jpeg" alt="PM logo">
-      <div><strong>PM Assistant</strong><span data-i18n="tagline">Умный помощник для каждого</span></div>
-    </a>
-    <button class="menu-btn" id="menuBtn" aria-label="Меню">☰</button>
-    <nav class="nav" id="nav">
-      <button data-route="home" data-i18n="nav_home">Главная</button>
-      <button data-route="features" data-i18n="nav_features">Возможности</button>
-      <button data-route="about" data-i18n="nav_about">О проекте</button>
-      <button data-route="investors" data-i18n="nav_investors">Инвесторам</button>
-      <button data-route="support" data-i18n="nav_support">Поддержка</button>
-      <button data-route="contacts" data-i18n="nav_contacts">Контакты</button>
-    </nav>
-    <select class="lang" id="language" aria-label="Language">
-      <option value="ru">RU</option><option value="uk">UA</option>
-      <option value="de">DE</option><option value="en">EN</option>
-    </select>
-  </header>
+<header>
+ <a class="brand" href="#home" data-route="home"><img src="assets/pm-logo.jpeg" alt="Логотип ПМ"><div><b>ПМ-ассистент</b><small>Версия 2.1</small></div></a>
+ <button class="menu" id="menuBtn">☰</button>
+ <nav id="nav">
+  <button data-route="home">Главная</button><button data-route="features">Возможности</button>
+  <button data-route="about">О проекте</button><button data-route="creator">Автор идеи</button>
+  <button data-route="navigation">Навигация</button><button data-route="presentation">Презентация</button><button data-route="contacts">Контакты</button>
+ </nav>
+ <select class="lang" id="lang"><option value="ru">RU</option><option value="uk">UA</option><option value="de">DE</option><option value="en">EN</option></select>
+</header>
 
-  <main>
-    <section class="page" id="page-home">
-      <div class="hero">
-        <div>
-          <span class="eyebrow">✦ <span data-i18n="eyebrow">Пробная рабочая версия</span></span>
-          <h1 data-i18n-html="hero_title">Ваш умный<br><em>PM Assistant</em></h1>
-          <p class="lead" data-i18n="hero_text">Общайтесь голосом или текстом, переключайте язык и получайте понятную помощь в одном месте.</p>
-          <div class="actions">
-            <button class="btn primary" data-route="assistant" data-i18n="start_chat">Начать общение</button>
-            <button class="btn ghost" data-route="features" data-i18n="learn_more">Посмотреть возможности</button>
-          </div>
-          <p class="small" data-i18n="local_note">Для работы микрофона запускайте сайт через START_PM_ASSISTANT.bat или размещайте его на HTTPS-хостинге.</p>
-        </div>
+<main>
+<section class="page" id="page-home">
+ <div class="hero">
+  <div class="intro">
+   <span class="badge">✦ Пробная версия 2.1</span>
+   <h1>Ваш умный<br><em>ПМ-ассистент</em></h1>
+   <p class="lead">Многоязычный цифровой помощник для общения, переводов, писем, документов и понятных ответов.</p>
+   <p class="slogan">ПМ-ассистент — создан человеком, чтобы помогать людям.</p>
+   <div class="actions"><button class="btn primary" data-route="chat">Начать общение</button><button class="btn" data-route="about">О проекте</button></div>
+  </div>
+  <div class="chatbox" id="chatbox">
+   <div class="chathead"><div class="orb">ПМ</div><div><b>ПМ-ассистент</b><div class="online">● Готов к общению</div></div></div>
+   <div class="chat" id="chat"></div>
+   <div class="composer">
+    <textarea id="input" placeholder="Напишите сообщение или нажмите микрофон"></textarea>
+    <button class="iconbtn" id="mic" title="Говорить">🎙️</button>
+    <button class="iconbtn attach" id="attach" title="Файл">📎</button>
+    <button class="iconbtn send" id="send" title="Отправить">➤</button>
+   </div>
+   <input id="filePicker" type="file" hidden>
+   <div class="hint" id="hint">Микрофон распознаёт речь. В этой версии ответы пока демонстрационные.</div>
+  </div>
+ </div>
+</section>
 
-        <div class="assistant-card" id="assistantBox">
-          <div class="assistant-head">
-            <div class="orb">PM</div>
-            <div><strong>PM Assistant</strong><div class="status" data-i18n="online">● Готов к общению</div></div>
-          </div>
-          <div class="chat" id="chat" aria-live="polite"></div>
-          <div class="composer">
-            <textarea id="messageInput" rows="1" data-i18n-placeholder="placeholder" placeholder="Напишите сообщение…"></textarea>
-            <button class="icon-btn" id="micBtn" title="Микрофон">🎙️</button>
-            <button class="icon-btn send-btn" id="sendBtn" title="Отправить">➤</button>
-          </div>
-          <div class="small" id="micStatus" data-i18n="mic_hint">Нажмите на микрофон и разрешите доступ браузеру.</div>
-        </div>
-      </div>
-    </section>
+<section class="page" id="page-features">
+ <div class="section-head"><span class="badge">✦ ПМ-ассистент 2.1</span><h2>Возможности</h2><p class="copy">Эта версия проверяет интерфейс и пользовательские действия перед подключением настоящего искусственного интеллекта.</p></div>
+ <div class="grid">
+  <div class="card"><div class="icon">🔊</div><h3>Озвучивание</h3><p class="copy">Кнопка возле каждого ответа читает текст вслух на выбранном языке.</p></div>
+  <div class="card"><div class="icon">👍</div><h3>Оценка ответа</h3><p class="copy">Пользователь может отметить полезный или неполезный ответ.</p></div>
+  <div class="card"><div class="icon">📋</div><h3>Копирование</h3><p class="copy">Ответ можно мгновенно скопировать для письма или документа.</p></div>
+  <div class="card"><div class="icon">⬇️</div><h3>Скачивание</h3><p class="copy">Ответ сохраняется отдельным текстовым файлом.</p></div>
+  <div class="card"><div class="icon">🔄</div><h3>Другой вариант</h3><p class="copy">Можно запросить новый демонстрационный вариант ответа.</p></div>
+  <div class="card"><div class="icon">🎙️</div><h3>Голосовой ввод</h3><p class="copy">Речь пользователя преобразуется в текст в поддерживаемом браузере.</p></div><div class="card"><div class="icon">🤝</div><h3>Вежливое общение</h3><p class="copy">ПМ-ассистент отвечает спокойно, уважительно и старается уточнить неясную речь вместо резкого отказа.</p></div>
+ </div>
+</section>
 
-    <section class="page" id="page-features">
-      <div class="section-head"><span class="eyebrow">✦ PM Assistant</span><h2 data-i18n="features_title">Возможности проекта</h2>
-      <p class="section-copy" data-i18n="features_intro">Основа сайта уже готова к дальнейшему подключению настоящего искусственного интеллекта.</p></div>
-      <div class="grid">
-        <article class="card"><div class="icon">💬</div><h3 data-i18n="f1t">Умное общение</h3><p data-i18n="f1d">Текстовый диалог с демонстрационными ответами. Позже подключается защищённый ИИ-сервер.</p></article>
-        <article class="card"><div class="icon">🎙️</div><h3 data-i18n="f2t">Голосовой ввод</h3><p data-i18n="f2d">Микрофон распознаёт речь на выбранном языке в поддерживаемом браузере.</p></article>
-        <article class="card"><div class="icon">🌍</div><h3 data-i18n="f3t">Четыре языка</h3><p data-i18n="f3d">Русский, украинский, немецкий и английский с автоматическим определением.</p></article>
-        <article class="card"><div class="icon">📄</div><h3 data-i18n="f4t">Документы</h3><p data-i18n="f4d">Подготовлено место для писем, заявлений, переводов и загрузки файлов.</p></article>
-        <article class="card"><div class="icon">📱</div><h3 data-i18n="f5t">Все устройства</h3><p data-i18n="f5d">Адаптивный дизайн для компьютера, iPhone, Android и планшета.</p></article>
-        <article class="card"><div class="icon">🔒</div><h3 data-i18n="f6t">Безопасная основа</h3><p data-i18n="f6d">Секретные ключи не хранятся в открытом коде сайта и будут подключены через сервер.</p></article>
-      </div>
-    </section>
+<section class="page" id="page-about">
+ <div class="section-head"><span class="badge">✦ О проекте</span><h2>Технологии с человеческим подходом</h2></div>
+ <div class="grid">
+  <div class="card"><h3>Что такое ПМ-ассистент</h3><p class="copy">ПМ-ассистент — многоязычная цифровая система, задуманная для помощи людям в общении, переводах, письмах, документах и повседневных вопросах.</p></div>
+  <div class="card"><h3>Для кого создан проект</h3><p class="copy">Для частных пользователей, иностранцев, людей с инвалидностью, пожилых людей, студентов, предпринимателей и организаций.</p></div>
+  <div class="card"><h3>Главная цель</h3><p class="copy">Сделать сложные технологии понятными и доступными, экономить время и облегчать людям повседневную и профессиональную жизнь.</p></div>
+ </div>
+</section>
 
-    <section class="page" id="page-about">
-      <div class="founder">
-        <img src="assets/pavel-founder.jpeg" alt="Основатель проекта PM Assistant">
-        <div><span class="eyebrow">✦ <span data-i18n="about_badge">О проекте</span></span>
-          <h2 data-i18n="about_title">Помощник, понятный каждому</h2>
-          <p class="section-copy" data-i18n="about_text">PM Assistant задуман как доступный многоязычный сервис для людей, которым нужна помощь в общении, переводах, документах и повседневных вопросах.</p>
-          <p class="section-copy" data-i18n="about_founder">Инициатор и основатель проекта — Павел Мышев. Главная идея — сделать современные технологии простыми, человечными и доступными.</p>
-        </div>
-      </div>
-    </section>
+<section class="page" id="page-creator">
+ <div class="section-head"><span class="badge">✦ Автор идеи</span><h2>Павел Мышев</h2></div>
+ <div class="creator">
+  <div class="card"><h3>Автор идеи и основатель проекта</h3>
+   <p class="copy">Павел Мышев — автор идеи и основатель проекта ПМ-ассистент. Его личный жизненный опыт помог понять, насколько людям нужен спокойный, понятный и доступный цифровой помощник.</p>
+   <p class="copy">Проект создаётся не ради жалости, а ради практической помощи: преодоления языковых барьеров, работы с документами, подготовки писем и поиска понятных решений.</p>
+  </div>
+  <div>
+   <div class="creator-note">Фотография автора не показывается на сайте постоянно. Она открывается только по отдельному запросу пользователя.</div>
+   <button class="btn" id="showCreator" style="margin-top:16px">Показать фотографию автора</button>
+   <div class="creator-photo" id="creatorPhoto"><img src="assets/pavel-founder.jpeg" alt="Павел Мышев"><p class="copy">Павел Мышев — автор идеи и основатель проекта ПМ-ассистент.</p></div>
+  </div>
+ </div>
+</section>
 
-    <section class="page" id="page-investors">
-      <div class="section-head"><span class="eyebrow">✦ PM Assistant</span><h2 data-i18n="invest_title">Информация для инвесторов</h2>
-      <p class="section-copy" data-i18n="invest_text">Проект развивается поэтапно: сайт, рабочий ИИ-ассистент, мобильные приложения, партнёрские интеграции и масштабирование.</p></div>
-      <div class="grid">
-        <article class="card"><h3 data-i18n="i1t">Проблема</h3><p data-i18n="i1d">Людям сложно пользоваться разрозненными сервисами, особенно при языковых и физических ограничениях.</p></article>
-        <article class="card"><h3 data-i18n="i2t">Решение</h3><p data-i18n="i2d">Один доступный интерфейс с голосом, переводами, документами и персональной помощью.</p></article>
-        <article class="card"><h3 data-i18n="i3t">Развитие</h3><p data-i18n="i3d">Модель подписки, организации-партнёры, социальные программы и корпоративные лицензии.</p></article>
-      </div>
-      <div class="notice" style="margin-top:24px" data-i18n="invest_note">Финансовые расчёты, презентацию и подробную дорожную карту мы добавим отдельным этапом.</div>
-    </section>
 
-    <section class="page" id="page-support">
-      <div class="section-head"><span class="eyebrow">✦ Support</span><h2 data-i18n="support_title">Поддержка пользователей</h2>
-      <p class="section-copy" data-i18n="support_text">Здесь позже появятся инструкции, ответы на частые вопросы, WhatsApp, Telegram и QR-коды.</p></div>
-      <div class="notice" data-i18n="support_note">В текущей пробной версии можно проверить меню, языки, микрофон, отправку сообщений и адаптивный дизайн.</div>
-    </section>
+<section class="page" id="page-navigation">
+ <div class="section-head"><span class="badge">✦ Скоро</span><h2>🧭 PM Navigation</h2>
+ <p class="copy">Интеллектуальная навигация планируется для следующего этапа развития проекта.</p></div>
+ <div class="grid">
+  <div class="card"><div class="icon">📍</div><h3>Маршруты</h3><p class="copy">Построение маршрута голосовой командой и открытие карты.</p></div>
+  <div class="card"><div class="icon">🏥</div><h3>Полезные места</h3><p class="copy">Поиск больниц, аптек, магазинов, вокзалов и других объектов.</p></div>
+  <div class="card"><div class="icon">♿</div><h3>Доступность</h3><p class="copy">В будущем — маршруты с учётом доступности и удобства пользователя.</p></div>
+ </div>
+ <div class="creator-note" style="margin-top:20px">Навигация пока показана как запланированная функция и не строит реальные маршруты в версии 2.1.</div>
+</section>
 
-    <section class="page" id="page-contacts">
-      <div class="section-head"><span class="eyebrow">✦ Contact</span><h2 data-i18n="contacts_title">Связаться с проектом</h2>
-      <p class="section-copy" data-i18n="contacts_text">Пробная форма работает локально: она проверяет поля и показывает подтверждение, но пока не отправляет письмо на сервер.</p></div>
-      <form class="contact-form" id="contactForm">
-        <input required id="nameField" data-i18n-placeholder="name_ph" placeholder="Ваше имя">
-        <input required type="email" id="emailField" data-i18n-placeholder="email_ph" placeholder="Ваш e-mail">
-        <textarea required rows="6" id="contactMessage" data-i18n-placeholder="message_ph" placeholder="Ваше сообщение"></textarea>
-        <button class="btn primary" type="submit" data-i18n="send_form">Отправить сообщение</button>
-      </form>
-    </section>
-  </main>
+<section class="page" id="page-presentation">
+ <div class="section-head"><span class="badge">✦ Для инвесторов</span><h2>Презентация проекта</h2>
+ <p class="copy">Откройте интерактивную презентацию PM Assistant в отдельном окне.</p></div>
+ <div class="card" style="min-height:auto">
+  <h3>PM Assistant — Investor Demo</h3>
+  <p class="copy">Логотип, история автора идеи, аудитория проекта, функции и план развития.</p>
+  <a class="btn primary" href="presentation/index.html" target="_blank" rel="noopener">▶ Смотреть презентацию</a>
+ </div>
+</section>
 
-  <footer class="footer">© <span id="year"></span> PM Assistant · <span data-i18n="footer">Пробная версия проекта</span></footer>
-</div>
+<section class="page" id="page-contacts">
+ <div class="section-head"><span class="badge">✦ Контакты</span><h2>Связаться с проектом</h2><p class="copy">Для предложений, сотрудничества и вопросов о развитии ПМ-ассистента.</p></div>
+ <div class="contact"><a class="email" href="mailto:kop8100@gmail.com">✉️ <strong>kop8100@gmail.com</strong></a></div>
+</section>
+</main>
+<footer>© 2026 ПМ-ассистент · Версия 2.1</footer>
 <div class="toast" id="toast"></div>
 
 <script>
-const translations = {
-ru:{
-tagline:"Умный помощник для каждого",nav_home:"Главная",nav_features:"Возможности",nav_about:"О проекте",nav_investors:"Инвесторам",nav_support:"Поддержка",nav_contacts:"Контакты",
-eyebrow:"Пробная рабочая версия",hero_title:"Ваш умный<br><em>PM Assistant</em>",hero_text:"Общайтесь голосом или текстом, переключайте язык и получайте понятную помощь в одном месте.",
-start_chat:"Начать общение",learn_more:"Посмотреть возможности",local_note:"Для работы микрофона запускайте сайт через START_PM_ASSISTANT.bat или размещайте его на HTTPS-хостинге.",
-online:"● Готов к общению",placeholder:"Напишите сообщение…",mic_hint:"Нажмите на микрофон и разрешите доступ браузеру.",
-features_title:"Возможности проекта",features_intro:"Основа сайта уже готова к дальнейшему подключению настоящего искусственного интеллекта.",
-f1t:"Умное общение",f1d:"Текстовый диалог с демонстрационными ответами. Позже подключается защищённый ИИ-сервер.",
-f2t:"Голосовой ввод",f2d:"Микрофон распознаёт речь на выбранном языке в поддерживаемом браузере.",
-f3t:"Четыре языка",f3d:"Русский, украинский, немецкий и английский с автоматическим определением.",
-f4t:"Документы",f4d:"Подготовлено место для писем, заявлений, переводов и загрузки файлов.",
-f5t:"Все устройства",f5d:"Адаптивный дизайн для компьютера, iPhone, Android и планшета.",
-f6t:"Безопасная основа",f6d:"Секретные ключи не хранятся в открытом коде сайта и будут подключены через сервер.",
-about_badge:"О проекте",about_title:"Помощник, понятный каждому",about_text:"PM Assistant задуман как доступный многоязычный сервис для людей, которым нужна помощь в общении, переводах, документах и повседневных вопросах.",
-about_founder:"Инициатор и основатель проекта — Павел Мышев. Главная идея — сделать современные технологии простыми, человечными и доступными.",
-invest_title:"Информация для инвесторов",invest_text:"Проект развивается поэтапно: сайт, рабочий ИИ-ассистент, мобильные приложения, партнёрские интеграции и масштабирование.",
-i1t:"Проблема",i1d:"Людям сложно пользоваться разрозненными сервисами, особенно при языковых и физических ограничениях.",
-i2t:"Решение",i2d:"Один доступный интерфейс с голосом, переводами, документами и персональной помощью.",
-i3t:"Развитие",i3d:"Модель подписки, организации-партнёры, социальные программы и корпоративные лицензии.",
-invest_note:"Финансовые расчёты, презентацию и подробную дорожную карту мы добавим отдельным этапом.",
-support_title:"Поддержка пользователей",support_text:"Здесь позже появятся инструкции, ответы на частые вопросы, WhatsApp, Telegram и QR-коды.",
-support_note:"В текущей пробной версии можно проверить меню, языки, микрофон, отправку сообщений и адаптивный дизайн.",
-contacts_title:"Связаться с проектом",contacts_text:"Пробная форма работает локально: она проверяет поля и показывает подтверждение, но пока не отправляет письмо на сервер.",
-name_ph:"Ваше имя",email_ph:"Ваш e-mail",message_ph:"Ваше сообщение",send_form:"Отправить сообщение",footer:"Пробная версия проекта",
-welcome:"Здравствуйте! Я пробная версия PM Assistant. Напишите сообщение или нажмите на микрофон.",demo_reply:"Я получил ваше сообщение. Сейчас это демонстрационная версия. На следующем этапе мы подключим настоящий искусственный интеллект.",listening:"Слушаю… Говорите.",mic_error:"Микрофон недоступен. Откройте сайт через localhost в Chrome или Edge и разрешите доступ.",sent:"Сообщение принято. Серверная отправка будет подключена позже."
-},
-uk:{
-tagline:"Розумний помічник для кожного",nav_home:"Головна",nav_features:"Можливості",nav_about:"Про проєкт",nav_investors:"Інвесторам",nav_support:"Підтримка",nav_contacts:"Контакти",
-eyebrow:"Пробна робоча версія",hero_title:"Ваш розумний<br><em>PM Assistant</em>",hero_text:"Спілкуйтеся голосом або текстом, перемикайте мову та отримуйте зрозумілу допомогу в одному місці.",
-start_chat:"Почати спілкування",learn_more:"Переглянути можливості",local_note:"Для роботи мікрофона запускайте сайт через START_PM_ASSISTANT.bat або розміщуйте його на HTTPS-хостингу.",
-online:"● Готовий до спілкування",placeholder:"Напишіть повідомлення…",mic_hint:"Натисніть мікрофон і дозвольте доступ браузеру.",
-features_title:"Можливості проєкту",features_intro:"Основа сайту вже готова до подальшого підключення справжнього штучного інтелекту.",
-f1t:"Розумне спілкування",f1d:"Текстовий діалог із демонстраційними відповідями. Пізніше підключається захищений ШІ-сервер.",
-f2t:"Голосове введення",f2d:"Мікрофон розпізнає мовлення вибраною мовою у браузері, який це підтримує.",
-f3t:"Чотири мови",f3d:"Російська, українська, німецька та англійська з автоматичним визначенням.",
-f4t:"Документи",f4d:"Підготовлено місце для листів, заяв, перекладів і завантаження файлів.",
-f5t:"Усі пристрої",f5d:"Адаптивний дизайн для комп'ютера, iPhone, Android і планшета.",
-f6t:"Безпечна основа",f6d:"Секретні ключі не зберігаються у відкритому коді сайту та будуть підключені через сервер.",
-about_badge:"Про проєкт",about_title:"Помічник, зрозумілий кожному",about_text:"PM Assistant задуманий як доступний багатомовний сервіс для людей, яким потрібна допомога у спілкуванні, перекладах, документах і щоденних питаннях.",
-about_founder:"Ініціатор і засновник проєкту — Павло Мишев. Головна ідея — зробити сучасні технології простими, людяними й доступними.",
-invest_title:"Інформація для інвесторів",invest_text:"Проєкт розвивається поетапно: сайт, робочий ШІ-помічник, мобільні застосунки, партнерські інтеграції та масштабування.",
-i1t:"Проблема",i1d:"Людям складно користуватися розрізненими сервісами, особливо за мовних і фізичних обмежень.",
-i2t:"Рішення",i2d:"Один доступний інтерфейс із голосом, перекладами, документами та персональною допомогою.",
-i3t:"Розвиток",i3d:"Модель підписки, організації-партнери, соціальні програми та корпоративні ліцензії.",
-invest_note:"Фінансові розрахунки, презентацію та докладну дорожню карту ми додамо окремим етапом.",
-support_title:"Підтримка користувачів",support_text:"Тут пізніше з'являться інструкції, відповіді на часті запитання, WhatsApp, Telegram і QR-коди.",
-support_note:"У поточній пробній версії можна перевірити меню, мови, мікрофон, надсилання повідомлень і адаптивний дизайн.",
-contacts_title:"Зв'язатися з проєктом",contacts_text:"Пробна форма працює локально: вона перевіряє поля та показує підтвердження, але поки не надсилає лист на сервер.",
-name_ph:"Ваше ім'я",email_ph:"Ваш e-mail",message_ph:"Ваше повідомлення",send_form:"Надіслати повідомлення",footer:"Пробна версія проєкту",
-welcome:"Вітаю! Я пробна версія PM Assistant. Напишіть повідомлення або натисніть мікрофон.",demo_reply:"Я отримав ваше повідомлення. Зараз це демонстраційна версія. На наступному етапі ми підключимо справжній штучний інтелект.",listening:"Слухаю… Говоріть.",mic_error:"Мікрофон недоступний. Відкрийте сайт через localhost у Chrome або Edge та дозвольте доступ.",sent:"Повідомлення прийнято. Серверне надсилання буде підключено пізніше."
-},
-de:{
-tagline:"Der intelligente Assistent für alle",nav_home:"Start",nav_features:"Funktionen",nav_about:"Über das Projekt",nav_investors:"Investoren",nav_support:"Support",nav_contacts:"Kontakt",
-eyebrow:"Funktionsfähige Testversion",hero_title:"Ihr intelligenter<br><em>PM Assistant</em>",hero_text:"Kommunizieren Sie per Sprache oder Text, wechseln Sie die Sprache und erhalten Sie verständliche Hilfe an einem Ort.",
-start_chat:"Chat starten",learn_more:"Funktionen ansehen",local_note:"Für das Mikrofon starten Sie die Website über START_PM_ASSISTANT.bat oder veröffentlichen Sie sie auf einem HTTPS-Hosting.",
-online:"● Bereit",placeholder:"Nachricht schreiben…",mic_hint:"Klicken Sie auf das Mikrofon und erlauben Sie den Browserzugriff.",
-features_title:"Projektfunktionen",features_intro:"Die Website-Grundlage ist für die spätere Anbindung echter künstlicher Intelligenz vorbereitet.",
-f1t:"Intelligenter Dialog",f1d:"Textdialog mit Demo-Antworten. Später wird ein geschützter KI-Server angebunden.",
-f2t:"Spracheingabe",f2d:"Das Mikrofon erkennt Sprache in der gewählten Sprache, sofern der Browser dies unterstützt.",
-f3t:"Vier Sprachen",f3d:"Russisch, Ukrainisch, Deutsch und Englisch mit automatischer Erkennung.",
-f4t:"Dokumente",f4d:"Bereiche für Briefe, Anträge, Übersetzungen und Datei-Uploads sind vorbereitet.",
-f5t:"Alle Geräte",f5d:"Responsives Design für Computer, iPhone, Android und Tablet.",
-f6t:"Sichere Grundlage",f6d:"Geheime Schlüssel werden nicht im offenen Website-Code gespeichert, sondern später serverseitig angebunden.",
-about_badge:"Über das Projekt",about_title:"Ein Assistent, den jeder versteht",about_text:"PM Assistant ist als barrierearmer mehrsprachiger Dienst für Kommunikation, Übersetzungen, Dokumente und Alltagsfragen gedacht.",
-about_founder:"Initiator und Gründer des Projekts ist Pavel Myshev. Die Hauptidee ist, moderne Technologie einfach, menschlich und zugänglich zu machen.",
-invest_title:"Informationen für Investoren",invest_text:"Das Projekt wächst schrittweise: Website, funktionsfähiger KI-Assistent, mobile Apps, Partnerintegrationen und Skalierung.",
-i1t:"Problem",i1d:"Viele Menschen haben Schwierigkeiten mit getrennten Diensten, besonders bei sprachlichen oder körperlichen Einschränkungen.",
-i2t:"Lösung",i2d:"Eine zugängliche Oberfläche mit Sprache, Übersetzungen, Dokumenten und persönlicher Hilfe.",
-i3t:"Wachstum",i3d:"Abonnementmodell, Partnerorganisationen, Sozialprogramme und Unternehmenslizenzen.",
-invest_note:"Finanzplanung, Präsentation und detaillierte Roadmap werden in einem eigenen Schritt ergänzt.",
-support_title:"Benutzersupport",support_text:"Hier folgen später Anleitungen, FAQ, WhatsApp, Telegram und QR-Codes.",
-support_note:"In dieser Testversion können Menü, Sprachen, Mikrofon, Nachrichten und responsives Design geprüft werden.",
-contacts_title:"Projekt kontaktieren",contacts_text:"Das Testformular prüft die Eingaben und bestätigt sie lokal, sendet aber noch keine E-Mail an einen Server.",
-name_ph:"Ihr Name",email_ph:"Ihre E-Mail",message_ph:"Ihre Nachricht",send_form:"Nachricht senden",footer:"Testversion des Projekts",
-welcome:"Hallo! Ich bin die Testversion von PM Assistant. Schreiben Sie eine Nachricht oder nutzen Sie das Mikrofon.",demo_reply:"Ich habe Ihre Nachricht erhalten. Dies ist derzeit eine Demo. Im nächsten Schritt wird echte künstliche Intelligenz angebunden.",listening:"Ich höre zu… Bitte sprechen.",mic_error:"Das Mikrofon ist nicht verfügbar. Öffnen Sie die Website über localhost in Chrome oder Edge und erlauben Sie den Zugriff.",sent:"Nachricht angenommen. Der Serverversand wird später verbunden."
-},
-en:{
-tagline:"The smart assistant for everyone",nav_home:"Home",nav_features:"Features",nav_about:"About",nav_investors:"Investors",nav_support:"Support",nav_contacts:"Contact",
-eyebrow:"Working trial version",hero_title:"Your intelligent<br><em>PM Assistant</em>",hero_text:"Communicate by voice or text, switch languages and get clear help in one place.",
-start_chat:"Start chatting",learn_more:"View features",local_note:"For microphone access, launch the site with START_PM_ASSISTANT.bat or publish it on HTTPS hosting.",
-online:"● Ready to chat",placeholder:"Write a message…",mic_hint:"Press the microphone and allow browser access.",
-features_title:"Project features",features_intro:"The website foundation is ready for a future connection to real artificial intelligence.",
-f1t:"Smart conversation",f1d:"Text chat with demonstration replies. A protected AI server can be connected later.",
-f2t:"Voice input",f2d:"The microphone recognizes speech in the selected language when supported by the browser.",
-f3t:"Four languages",f3d:"Russian, Ukrainian, German and English with automatic detection.",
-f4t:"Documents",f4d:"Space is prepared for letters, applications, translations and file uploads.",
-f5t:"All devices",f5d:"Responsive design for computers, iPhone, Android and tablets.",
-f6t:"Secure foundation",f6d:"Secret keys are not stored in the public website code and will be connected through a server.",
-about_badge:"About the project",about_title:"An assistant everyone can understand",about_text:"PM Assistant is designed as an accessible multilingual service for communication, translation, documents and everyday questions.",
-about_founder:"The project initiator and founder is Pavel Myshev. The main idea is to make modern technology simple, human and accessible.",
-invest_title:"Information for investors",invest_text:"The project develops in stages: website, working AI assistant, mobile apps, partner integrations and scaling.",
-i1t:"Problem",i1d:"People struggle with scattered services, especially when facing language or physical barriers.",
-i2t:"Solution",i2d:"One accessible interface with voice, translations, documents and personal support.",
-i3t:"Growth",i3d:"Subscription model, partner organisations, social programmes and corporate licences.",
-invest_note:"Financial calculations, the pitch deck and detailed roadmap will be added as a separate stage.",
-support_title:"User support",support_text:"Instructions, FAQs, WhatsApp, Telegram and QR codes will be added here later.",
-support_note:"This trial version lets you test the menu, languages, microphone, messages and responsive design.",
-contacts_title:"Contact the project",contacts_text:"The trial form validates entries and confirms them locally, but does not yet send email to a server.",
-name_ph:"Your name",email_ph:"Your email",message_ph:"Your message",send_form:"Send message",footer:"Trial version of the project",
-welcome:"Hello! I am the PM Assistant trial version. Write a message or press the microphone.",demo_reply:"I received your message. This is currently a demo. Real artificial intelligence will be connected in the next stage.",listening:"Listening… Please speak.",mic_error:"The microphone is unavailable. Open the site via localhost in Chrome or Edge and allow access.",sent:"Message accepted. Server delivery will be connected later."
-}};
-
-let currentLang = localStorage.getItem("pm_lang") || (() => {
-  const b=(navigator.language||"ru").toLowerCase();
-  if(b.startsWith("uk")) return "uk"; if(b.startsWith("de")) return "de"; if(b.startsWith("en")) return "en"; return "ru";
-})();
-const langSelect=document.getElementById("language"), nav=document.getElementById("nav");
-langSelect.value=currentLang;
-
-function t(k){return (translations[currentLang]&&translations[currentLang][k])||translations.ru[k]||k}
-function applyLanguage(){
-  document.documentElement.lang=currentLang;
-  document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n));
-  document.querySelectorAll("[data-i18n-html]").forEach(el=>el.innerHTML=t(el.dataset.i18nHtml));
-  document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));
-  localStorage.setItem("pm_lang",currentLang);
+const chat=document.getElementById('chat'),input=document.getElementById('input'),toast=document.getElementById('toast');
+const langs={ru:'ru-RU',uk:'uk-UA',de:'de-DE',en:'en-US'};
+let currentLang=localStorage.getItem('pm21_lang')||((navigator.language||'ru').slice(0,2));
+if(!langs[currentLang])currentLang='ru';document.getElementById('lang').value=currentLang;
+const demoReplies=[
+'Меня зовут ПМ-ассистент. Название связано с именем автора идеи проекта — Павла Мышева. Проект создан, чтобы делать технологии понятнее и полезнее для людей, включая пожилых пользователей, иностранцев, предпринимателей и людей с инвалидностью.',
+'Спасибо за ваше сообщение. Я ПМ-ассистент. Сейчас работает пробная версия 2.1: я вежливо принимаю ваш запрос, могу озвучить ответ, помочь скопировать или скачать текст и предложить другой вариант.',
+'Спасибо за вопрос. В версии 2.1 я показываю интерфейс и основные действия. В версии 2.2 будет подключён настоящий искусственный интеллект с защищённым сервером.',
+'ПМ-ассистент создан для людей, которым нужна понятная и уважительная помощь: переводы, письма, документы, голосовое общение и повседневные вопросы.'
+];
+function showToast(t){toast.textContent=t;toast.style.display='block';setTimeout(()=>toast.style.display='none',2600)}
+function tools(text){
+ const d=document.createElement('div');d.className='tools';
+ const items=[['🔊','Озвучить','speak'],['👍','Полезно','up'],['👎','Не полезно','down'],['📋','Копировать','copy'],['⬇️','Скачать','download'],['🔄','Другой ответ','retry'],['↗️','Поделиться','share']];
+ items.forEach(([i,l,a])=>{const b=document.createElement('button');b.className='tool';b.textContent=i+' '+l;b.dataset.action=a;b.onclick=()=>handleTool(a,text,b);d.appendChild(b)});
+ return d
 }
-langSelect.addEventListener("change",e=>{currentLang=e.target.value;applyLanguage();resetWelcome()});
-
-function routeTo(route){
-  if(route==="assistant"){route="home";setTimeout(()=>document.getElementById("assistantBox").scrollIntoView({behavior:"smooth",block:"center"}),40)}
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  const page=document.getElementById("page-"+route)||document.getElementById("page-home");
-  page.classList.add("active");
-  document.querySelectorAll("[data-route]").forEach(b=>b.classList.toggle("active",b.dataset.route===route));
-  history.replaceState(null,"","#"+route);
-  nav.classList.remove("open");
-  window.scrollTo({top:0,behavior:"smooth"});
+function addMessage(text,who='bot'){
+ const w=document.createElement('div');w.className='message-wrap '+who;
+ const m=document.createElement('div');m.className='msg';m.textContent=text;w.appendChild(m);
+ if(who==='bot')w.appendChild(tools(text));chat.appendChild(w);chat.scrollTop=chat.scrollHeight
 }
-document.querySelectorAll("[data-route]").forEach(el=>el.addEventListener("click",e=>{e.preventDefault();routeTo(el.dataset.route)}));
-document.getElementById("menuBtn").addEventListener("click",()=>nav.classList.toggle("open"));
-
-const chat=document.getElementById("chat"), input=document.getElementById("messageInput");
-function addMessage(text,who){const d=document.createElement("div");d.className="msg "+who;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
-function resetWelcome(){chat.innerHTML="";addMessage(t("welcome"),"bot")}
-function sendMessage(){
-  const v=input.value.trim(); if(!v)return; addMessage(v,"user");input.value="";
-  setTimeout(()=>addMessage(t("demo_reply"),"bot"),450);
+function handleTool(a,text,b){
+ if(a==='speak'){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=langs[currentLang];speechSynthesis.speak(u)}
+ if(a==='up'||a==='down'){b.classList.add('on');showToast(a==='up'?'Спасибо за оценку':'Спасибо. Мы учтём замечание')}
+ if(a==='copy'){navigator.clipboard.writeText(text).then(()=>showToast('Ответ скопирован'))}
+ if(a==='download'){const blob=new Blob([text],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),x=document.createElement('a');x.href=url;x.download='PM-Assistant-answer.txt';x.click();URL.revokeObjectURL(url)}
+ if(a==='retry'){addMessage(demoReplies[Math.floor(Math.random()*demoReplies.length)],'bot')}
+ if(a==='share'){navigator.share?navigator.share({title:'ПМ-ассистент',text}).catch(()=>{}):navigator.clipboard.writeText(text).then(()=>showToast('Текст скопирован для отправки'))}
 }
-document.getElementById("sendBtn").addEventListener("click",sendMessage);
-input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}});
-
-const micBtn=document.getElementById("micBtn"), micStatus=document.getElementById("micStatus");
-let recognition=null;
-const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SpeechRecognition){
-  recognition=new SpeechRecognition();
-  recognition.interimResults=true;recognition.continuous=false;
-  recognition.onstart=()=>{micBtn.classList.add("listening");micStatus.textContent=t("listening")};
-  recognition.onend=()=>{micBtn.classList.remove("listening");micStatus.textContent=t("mic_hint")};
-  recognition.onerror=()=>{micBtn.classList.remove("listening");micStatus.textContent=t("mic_error")};
-  recognition.onresult=e=>{
-    let text="";for(let i=e.resultIndex;i<e.results.length;i++) text+=e.results[i][0].transcript;
-    input.value=text;
-  };
+function send(){
+ const v=input.value.trim();if(!v)return;addMessage(v,'user');input.value='';
+ const low=v.toLowerCase();
+ let reply=demoReplies[0];
+ if(low.includes('кто тебя создал')||low.includes('кто автор')||low.includes('кто создатель')){
+   reply=demoReplies[0];
+ } else if(v.split(/\s+/).length<3 || /[а-яёa-z]{12,}/i.test(v)){
+   reply='Я постараюсь понять вас даже при неясной речи. Сейчас я понял запрос не полностью. Пожалуйста, скажите или напишите основную мысль ещё раз — я помогу исправить формулировку.';
+ }
+ setTimeout(()=>addMessage(reply,'bot'),380)
 }
-micBtn.addEventListener("click",()=>{
-  if(!recognition){micStatus.textContent=t("mic_error");return}
-  recognition.lang={ru:"ru-RU",uk:"uk-UA",de:"de-DE",en:"en-US"}[currentLang];
-  try{recognition.start()}catch(e){try{recognition.stop()}catch(_){}}
-});
+document.getElementById('send').onclick=send;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+addMessage('Здравствуйте! Я ПМ-ассистент — многоязычный цифровой помощник. Моё название связано с именем автора идеи проекта — Павла Мышева. В этой версии вы можете проверить новые кнопки возле моих ответов.','bot');
 
-const toast=document.getElementById("toast");
-function showToast(msg){toast.textContent=msg;toast.style.display="block";setTimeout(()=>toast.style.display="none",3200)}
-document.getElementById("contactForm").addEventListener("submit",e=>{e.preventDefault();showToast(t("sent"));e.target.reset()});
-document.getElementById("year").textContent=new Date().getFullYear();
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec;
+if(SR){rec=new SR();rec.interimResults=true;rec.onstart=()=>document.getElementById('mic').classList.add('listening');rec.onend=()=>document.getElementById('mic').classList.remove('listening');rec.onresult=e=>{let s='';for(let i=e.resultIndex;i<e.results.length;i++)s+=e.results[i][0].transcript;input.value=s}}
+document.getElementById('mic').onclick=()=>{if(!rec)return showToast('Распознавание речи не поддерживается этим браузером');rec.lang=langs[currentLang];try{rec.start()}catch(e){}};
+document.getElementById('attach').onclick=()=>document.getElementById('filePicker').click();
+document.getElementById('filePicker').onchange=e=>{const f=e.target.files[0];if(f)showToast('Выбран файл: '+f.name+' (обработка будет подключена позже)')};
+document.getElementById('lang').onchange=e=>{currentLang=e.target.value;localStorage.setItem('pm21_lang',currentLang);showToast('Язык выбран')};
 
-applyLanguage(); resetWelcome(); routeTo((location.hash||"#home").slice(1));
-window.addEventListener("hashchange",()=>routeTo((location.hash||"#home").slice(1)));
-
-if("serviceWorker" in navigator && location.protocol.startsWith("http")){
-  navigator.serviceWorker.register("sw.js").catch(()=>{});
-}
+function route(r){if(r==='chat'){r='home';setTimeout(()=>document.getElementById('chatbox').scrollIntoView({behavior:'smooth',block:'center'}),50)}
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));(document.getElementById('page-'+r)||document.getElementById('page-home')).classList.add('active');
+ document.querySelectorAll('[data-route]').forEach(x=>x.classList.toggle('active',x.dataset.route===r));document.getElementById('nav').classList.remove('open');history.replaceState(null,'','#'+r);window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('[data-route]').forEach(x=>x.onclick=e=>{e.preventDefault();route(x.dataset.route)});
+document.getElementById('menuBtn').onclick=()=>document.getElementById('nav').classList.toggle('open');
+document.getElementById('showCreator').onclick=()=>{const p=document.getElementById('creatorPhoto');p.classList.toggle('show');document.getElementById('showCreator').textContent=p.classList.contains('show')?'Скрыть фотографию автора':'Показать фотографию автора'};
+route((location.hash||'#home').slice(1));window.onhashchange=()=>route((location.hash||'#home').slice(1));
 </script>
 </body>
 </html>
